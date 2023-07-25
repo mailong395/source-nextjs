@@ -1,8 +1,47 @@
+'use client'
+
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
+import '@rainbow-me/rainbowkit/styles.css';
+
+import {
+  getDefaultWallets,
+  RainbowKitProvider,
+} from '@rainbow-me/rainbowkit';
+import { configureChains, createConfig, WagmiConfig } from 'wagmi';
+import {
+  mainnet,
+  polygon,
+  optimism,
+  arbitrum,
+  zora,
+} from 'wagmi/chains';
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
+
 const inter = Inter({ subsets: ['latin'] })
+
+const { chains, publicClient } = configureChains(
+  [mainnet, polygon, optimism, arbitrum, zora],
+  [
+    jsonRpcProvider({
+      rpc: chain => ({ http: chain.rpcUrls.default.http[0] })
+    })
+  ]
+);
+
+const { connectors } = getDefaultWallets({
+  appName: 'My RainbowKit App',
+  projectId: '01b61e89c7a9156936c7d7646c5a909e',
+  chains
+});
+
+const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors,
+  publicClient
+})
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -16,7 +55,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <WagmiConfig config={wagmiConfig}>
+          <RainbowKitProvider chains={chains}>
+            {children}
+          </RainbowKitProvider>
+        </WagmiConfig>
+      </body>
     </html>
   )
 }
